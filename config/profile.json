@@ -1,27 +1,49 @@
 {
   "full_name": "Estudiante USAL",
-  "career": "Licenciatura en Sistemas / Computación",
-  "year_of_study": "3er año",
+  "career": "Licenciatura en Sistemas",
+  "career_equivalents": [
+    "Licenciatura en Sistemas",
+    "Ingeniería en Informática",
+    "Ciencias de la Computación",
+    "Analista de Sistemas",
+    "Tecnicatura en Programación",
+    "Tecnología de la Información",
+    "Estudiantes de carreras de Sistemas o afines"
+  ],
+  "current_situation": "Estudiante regular universitario en USAL con disponibilidad horaria para pasantías o jornadas laborales (part-time / full-time)",
+  "experience_level": "Sin experiencia laboral previa en el sector (Búsqueda de Primer Empleo / Pasantía / Trainee)",
+  "learning_attitude": "Gran vocación de aprendizaje, alta adaptabilidad para capacitarse rápidamente en herramientas propietarias, procesos o nuevas tecnologías",
   "skills": [
     "Python",
     "JavaScript",
     "TypeScript",
-    "SQL",
-    "Git",
-    "FastAPI",
-    "React",
-    "HTML/CSS"
+    "SQL (MySQL, PostgreSQL, SQLite)",
+    "Git / GitHub",
+    "HTML5 / CSS3",
+    "FastAPI / APIs REST",
+    "React (Básico)",
+    "Node.js",
+    "Bases de Datos Relacionales",
+    "Resolución analítica de problemas",
+    "Soporte técnico y diagnóstico de software/hardware",
+    "Herramientas de oficina y planillas de cálculo (Excel/Google Sheets avanzadas)",
+    "Testing manual y documentación técnica"
   ],
   "languages": [
     {"language": "Español", "level": "Nativo"},
-    {"language": "Inglés", "level": "Intermedio (B2)"}
+    {"language": "Inglés", "level": "Intermedio / Técnico (lectura fluida de documentación)"}
   ],
-  "interests": [
-    "Desarrollo Web Backend",
-    "Desarrollo Full Stack Junior",
-    "Pasantías IT",
-    "Análisis de Datos / Soporte Técnico"
+  "target_categories_and_roles": [
+    "Pasantías universitarias en Tecnología, Sistemas o Innovación",
+    "Trainee / Junior Developer (Backend, Frontend, Full Stack)",
+    "Soporte Técnico / Mesa de Ayuda / Help Desk / Operaciones IT",
+    "Testing / QA Manual / Aseguramiento de Calidad",
+    "Analista Funcional Junior / Relevamiento y Análisis de Procesos",
+    "Analista de Datos Junior / Data Entry Técnico / BI / SQL",
+    "Asistente de Sistemas / Administración básica de Infraestructura",
+    "Consultoría Tecnológica Junior / Implementación de Software / ERPs",
+    "Cualquier vacante abierta a perfiles juniors de tecnología con ganas de aprender"
   ],
-  "work_modality_preference": ["Remoto", "Híbrido (CABA/GBA)", "Presencial (CABA)"],
-  "cv_summary": "Estudiante avanzado de sistemas con sólida base en desarrollo de software, Python y bases de datos. Proactivo, con capacidad analítica y ganas de integrarse a equipos de desarrollo o soporte."
+  "work_modality_preference": ["Remoto", "Híbrido (CABA / GBA)", "Presencial (CABA)"],
+  "cv_summary": "Estudiante de Licenciatura en Sistemas en la Universidad del Salvador (USAL), con fuerte inclinación al aprendizaje continuo y resolución práctica de problemas. Con sólidos fundamentos en programación, bases de datos y herramientas informáticas. En búsqueda activa de su primer empleo, pasantía o rol trainee en el sector tecnológico, con alta motivación para integrarse a equipos dinámicos y desarrollarse profesionalmente."
 }

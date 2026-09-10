@@ -1,23 +1,50 @@
 {
-  "min_fit_score": 75,
+  "min_fit_score": 65,
+  "experience_policy": "Búsqueda activa SIN EXPERIENCIA previa. Aceptar puestos que pidan 0 a 1 año de experiencia si los requisitos son accesibles o para estudiantes. Solo descartar si exige explícitamente 2+ años de experiencia excluyente o perfil senior.",
   "target_roles": [
+    "Pasantía",
+    "Pasante",
+    "Trainee",
+    "Junior",
+    "Jr",
+    "Sin experiencia",
+    "Inicial",
     "Desarrollador",
     "Programador",
     "Developer",
-    "Pasantía",
-    "Junior",
-    "Trainee",
+    "Software",
     "Sistemas",
+    "Informática",
+    "IT",
     "Soporte",
-    "Data"
+    "Help Desk",
+    "Mesa de Ayuda",
+    "Técnico",
+    "QA",
+    "Tester",
+    "Testing",
+    "Calidad",
+    "Analista Funcional",
+    "Analista de Procesos",
+    "Analista de Datos",
+    "Data",
+    "Consultor",
+    "Implementador",
+    "Operador"
   ],
   "excluded_keywords": [
     "Senior",
+    "Sr",
     "Semi Senior",
     "SSr",
     "Líder Técnico",
     "Tech Lead",
-    "Arquitecto"
+    "Arquitecto",
+    "Gerente",
+    "Manager",
+    "Experiencia excluyente de 3 años",
+    "Experiencia excluyente de 4 años",
+    "Experiencia excluyente de 5 años"
   ],
-  "max_applications_per_run": 10
+  "max_applications_per_run": 15
 }

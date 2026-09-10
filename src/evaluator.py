@@ -39,11 +39,16 @@ Empresa: {company}
 Descripción completa y requisitos:
 {description}
 
---- INSTRUCCIONES ---
-1. Revisa si el puesto requiere un seniority inalcanzable (ej: Senior, Lead) o tecnologías incompatibles.
-2. Compara los requisitos con las habilidades y carrera del candidato.
-3. Asigna un `fit_score` numérico entre 0 y 100.
-4. Si el score es mayor o igual a {self.criteria.get('min_fit_score', 75)} y el perfil es apto, recomienda "APPLY", de lo contrario "SKIP".
+--- INSTRUCCIONES ESPECÍFICAS DE EVALUACIÓN ---
+1. REGLA CLAVE DE EXPERIENCIA: El candidato BUSCA SU PRIMER EMPLEO O PASANTÍA (SIN EXPERIENCIA LABORAL PREVIA).
+   - Si la oferta es para pasantías, trainee, junior inicial, estudiantes universitarios o requisitos accesibles y aprendibles, dale un puntaje ELEVADO (>= 75 u 80).
+   - Si la oferta dice 'sin experiencia', 'estudiante' o pide hasta 1 año pero las tareas son alcanzables en el rubro, recomienda "APPLY".
+   - SOLO recomienda "SKIP" por experiencia si la vacante exige de forma excluyente 2 o más años de experiencia previa comprobable, o niveles Semi-Senior / Senior / Lead.
+2. ABANICO AMPLIO DE ROLES Y SINÓNIMOS:
+   - Sé flexible con la denominación del puesto: Desarrollador (Cualquier lenguaje/stack), Soporte Técnico, Mesa de Ayuda, Help Desk, QA / Testing, Analista Funcional Junior, Analista de Procesos, Analista de Datos / BI / SQL, Operador de Sistemas, Asistente IT, Consultor Jr de Software, etc. Todos son afines y muy deseables.
+   - NO penalices severamente si la empresa usa herramientas propietarias o frameworks específicos secundarios, ya que el candidato tiene gran facilidad y disposición para aprender rápido.
+3. Asigna un `fit_score` numérico entre 0 y 100 ponderando la accesibilidad del puesto y el potencial de aprendizaje.
+4. Si el score es mayor o igual a {self.criteria.get('min_fit_score', 65)} y la vacante es una oportunidad razonable de inserción laboral o pasantía, recomienda "APPLY", de lo contrario "SKIP".
 5. Extrae habilidades coincidentes, faltantes, pros, contras y un resumen claro de 1 a 2 oraciones.
 Responde estrictamente en formato JSON según el esquema solicitado.
 """
