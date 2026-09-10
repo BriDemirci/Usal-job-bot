@@ -1,0 +1,1 @@
+"""USAL Job Bot package."""

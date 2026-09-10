@@ -1,0 +1,27 @@
+{
+  "full_name": "Estudiante USAL",
+  "career": "Licenciatura en Sistemas / Computación",
+  "year_of_study": "3er año",
+  "skills": [
+    "Python",
+    "JavaScript",
+    "TypeScript",
+    "SQL",
+    "Git",
+    "FastAPI",
+    "React",
+    "HTML/CSS"
+  ],
+  "languages": [
+    {"language": "Español", "level": "Nativo"},
+    {"language": "Inglés", "level": "Intermedio (B2)"}
+  ],
+  "interests": [
+    "Desarrollo Web Backend",
+    "Desarrollo Full Stack Junior",
+    "Pasantías IT",
+    "Análisis de Datos / Soporte Técnico"
+  ],
+  "work_modality_preference": ["Remoto", "Híbrido (CABA/GBA)", "Presencial (CABA)"],
+  "cv_summary": "Estudiante avanzado de sistemas con sólida base en desarrollo de software, Python y bases de datos. Proactivo, con capacidad analítica y ganas de integrarse a equipos de desarrollo o soporte."
+}

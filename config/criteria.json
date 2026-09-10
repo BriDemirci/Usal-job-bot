@@ -1,0 +1,23 @@
+{
+  "min_fit_score": 75,
+  "target_roles": [
+    "Desarrollador",
+    "Programador",
+    "Developer",
+    "Pasantía",
+    "Junior",
+    "Trainee",
+    "Sistemas",
+    "Soporte",
+    "Data"
+  ],
+  "excluded_keywords": [
+    "Senior",
+    "Semi Senior",
+    "SSr",
+    "Líder Técnico",
+    "Tech Lead",
+    "Arquitecto"
+  ],
+  "max_applications_per_run": 10
+}
