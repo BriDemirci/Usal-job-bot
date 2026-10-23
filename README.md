@@ -50,16 +50,27 @@ MIN_FIT_SCORE=75
 
 ### 4. Ejecutar el Bot
 
+Puedes ejecutar directamente `run_bot.bat` haciendo doble clic o desde la terminal:
+
 #### Modo Interactivo (Recomendado para empezar):
 ```bash
 python main.py
+# o simplemente:
+.\run_bot.bat
 ```
 El bot revisará cada vacante, te mostrará una tarjeta con los pros, contras y score, y te preguntará:
 `¿Deseas postularte a esta oferta? [S/n/q]:`
 
-#### Modo Auditoría (Sin hacer clic en postularse):
+#### Modo Auditoría (Dry-Run):
+Evalúa las vacantes y guarda las aprobadas en la base de datos sin hacer clic en postularse:
 ```bash
 python main.py --dry-run
+```
+
+#### Postulación de Aprobadas en Lote:
+Aplica automáticamente a las ofertas que fueron aprobadas durante el modo auditoría:
+```bash
+python main.py --apply-approved
 ```
 
 #### Modo 100% Automático:

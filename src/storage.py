@@ -96,3 +96,17 @@ class StorageRepository:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM jobs ORDER BY id DESC")
             return [dict(row) for row in cursor.fetchall()]
+
+    def get_pending_approved_jobs(self) -> List[Dict[str, Any]]:
+        """Obtiene las ofertas evaluadas con recomendación APPLY que aún no fueron postuladas."""
+        with self._get_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM jobs 
+                WHERE recommendation = 'APPLY' 
+                  AND status = 'EVALUATED'
+                ORDER BY fit_score DESC
+            """)
+            return [dict(row) for row in cursor.fetchall()]
+

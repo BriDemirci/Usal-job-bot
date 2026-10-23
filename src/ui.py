@@ -37,3 +37,23 @@ def ask_user_confirmation() -> str:
     console.print("\n[bold yellow]¿Deseas postularte a esta oferta?[/bold yellow]")
     choice = input("  [S] Sí / [n] No / [q] Salir: ").strip().lower()
     return choice
+
+def print_pending_approved_table(jobs: list):
+    """Muestra una tabla elegante con las vacantes aprobadas pendientes."""
+    table = Table(title="[bold green]Vacantes Aprobadas Listas para Postulación[/bold green]", border_style="cyan")
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Puesto", style="bold white")
+    table.add_column("Score", justify="center", style="bold green", width=8)
+    table.add_column("Análisis IA", style="dim cyan")
+
+    for i, j in enumerate(jobs, 1):
+        reason = j.get("reason", "") or ""
+        short_reason = (reason[:55] + "...") if len(reason) > 55 else reason
+        table.add_row(str(i), j["title"], f"{j['fit_score']}/100", short_reason)
+    console.print(table)
+
+def ask_batch_confirmation(count: int) -> bool:
+    console.print(f"\n[bold yellow]¿Deseas postularte automáticamente a estas {count} ofertas aprobadas?[/bold yellow]")
+    choice = input("  [S] Sí, postularme a todas / [n] Cancelar: ").strip().lower()
+    return choice in ("s", "", "y", "si", "sí")
+

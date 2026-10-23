@@ -1,8 +1,14 @@
 import json
-from typing import List, Literal, Dict, Any
+import time
+import re
+import warnings
+from typing import List, Literal, Dict, Any, Optional
 from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
+
+# Silenciar advertencias internas de la libreria google-genai para mantener limpia la consola
+warnings.filterwarnings("ignore", category=UserWarning)
 
 class JobEvaluation(BaseModel):
     job_title: str
@@ -16,11 +22,22 @@ class JobEvaluation(BaseModel):
     summary_reason: str
 
 class JobEvaluator:
-    def __init__(self, api_key: str, profile: Dict[str, Any], criteria: Dict[str, Any]):
+    def __init__(self, api_key: str, profile: Dict[str, Any], criteria: Dict[str, Any], model_name: str = "gemini-3.5-flash-lite"):
         self.api_key = api_key
         self.profile = profile
         self.criteria = criteria
+        self.model_name = model_name
         self.client = genai.Client(api_key=self.api_key)
+
+    def should_prefilter_skip(self, title: str) -> Optional[str]:
+        """Verifica rápidamente si el título de la oferta coincide con alguna disciplina descartada."""
+        title_lower = title.lower()
+        excluded_disciplines = self.criteria.get("excluded_disciplines", [])
+        for disc in excluded_disciplines:
+            pattern = rf"\b{re.escape(disc.lower())}"
+            if re.search(pattern, title_lower):
+                return f"Disciplina no afín: '{disc}'"
+        return None
 
     def _build_prompt(self, title: str, company: str, description: str) -> str:
         return f"""
@@ -53,16 +70,27 @@ Descripción completa y requisitos:
 Responde estrictamente en formato JSON según el esquema solicitado.
 """
 
-    def evaluate_job(self, title: str, company: str, description: str) -> JobEvaluation:
+    def evaluate_job(self, title: str, company: str, description: str, max_retries: int = 3) -> JobEvaluation:
         prompt = self._build_prompt(title, company, description)
-        response = self.client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=JobEvaluation,
-                temperature=0.2
-            )
-        )
-        data = json.loads(response.text)
-        return JobEvaluation(**data)
+        for attempt in range(1, max_retries + 1):
+            try:
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=JobEvaluation,
+                        temperature=0.2
+                    )
+                )
+                data = json.loads(response.text)
+                return JobEvaluation(**data)
+            except Exception as e:
+                err_str = str(e).lower()
+                is_rate_limit = "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str
+                if is_rate_limit and attempt < max_retries:
+                    wait_time = 20 * attempt
+                    print(f"\n[Aviso Cuota] Límite por minuto alcanzado. Pausando {wait_time}s antes de reintentar (intento {attempt}/{max_retries})...")
+                    time.sleep(wait_time)
+                else:
+                    raise e

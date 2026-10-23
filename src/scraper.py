@@ -11,6 +11,7 @@ class JobListing(BaseModel):
     summary: str = ""
     full_description: str = ""
     apply_selector: Optional[str] = None
+    already_applied: bool = False
 
 class PortalScraper:
     def __init__(self):
@@ -36,7 +37,51 @@ class PortalScraper:
         """Detecta las tarjetas de empleo visibles en la página actual."""
         jobs: List[JobListing] = []
         
-        # Estrategia 1: Buscar por selectores de tarjeta conocidos
+        # Estrategia 1: Portal USAL específico (.listado_ofertas_item_alumno)
+        usal_cards = page.locator(".listado_ofertas_item_alumno")
+        usal_count = await usal_cards.count()
+        if usal_count > 0:
+            import re
+            for i in range(usal_count):
+                card = usal_cards.nth(i)
+                title_loc = card.locator(".title_alumno")
+                title = (await title_loc.inner_text()).strip() if await title_loc.count() > 0 else "Puesto sin título"
+                
+                loc_loc = card.locator(".location_alumno")
+                location = (await loc_loc.inner_text()).strip() if await loc_loc.count() > 0 else "No especificada"
+                
+                tipo_loc = card.locator(".tipo_empleo_alumno")
+                tipo = (await tipo_loc.inner_text()).strip() if await tipo_loc.count() > 0 else ""
+                
+                fecha_loc = card.locator(".fecha_publicacion_alumno")
+                fecha = (await fecha_loc.inner_text()).strip() if await fecha_loc.count() > 0 else ""
+                
+                empresa_loc = card.locator(".empresa_interes_alumno, .nombre_empresa")
+                company = (await empresa_loc.inner_text()).strip() if await empresa_loc.count() > 0 else "Empresa USAL"
+                
+                # Extraer id de la oferta si está presente en shareLink o href
+                full_card_html = await card.inner_html()
+                id_match = re.search(r'id=(\d+)', full_card_html)
+                job_id = f"usal-{id_match.group(1)}" if id_match else self._generate_id(title, company)
+                
+                # Detectar si el alumno ya se postuló previamente desde el portal
+                has_applied = await card.locator(".button_alumno_aplicaste").count() > 0
+
+                card_text = (await card.inner_text()).strip()
+                summary = f"{title} | {company} | {location} | {tipo} | Publicado: {fecha}"
+                
+                jobs.append(JobListing(
+                    job_id=job_id,
+                    title=title,
+                    company=company,
+                    location=location,
+                    summary=summary,
+                    full_description=card_text,
+                    already_applied=has_applied
+                ))
+            return jobs
+
+        # Estrategia 2: Buscar por selectores de tarjeta genéricos conocidos
         for card_sel in self.card_selectors:
             cards = page.locator(card_sel)
             count = await cards.count()
@@ -95,3 +140,53 @@ class PortalScraper:
                 await page.wait_for_timeout(1000)
                 return True, "Clic ejecutado con éxito en el botón de postulación."
         return False, "No se localizó un botón visible de 'Postularse' o 'Aplicar'."
+
+    async def apply_to_offer_by_id(self, page: Page, offer_id: str) -> Tuple[bool, str]:
+        """Aplica a una oferta específica enviando la solicitud autenticada y registrándola en el portal USAL."""
+        numeric_id = offer_id.replace("usal-", "")
+        try:
+            result = await page.evaluate("""
+                async (id) => {
+                    function getRandomString(length = 20) {
+                        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                        let res = '';
+                        for (let i = 0; i < length; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+                        return res;
+                    }
+
+                    // Paso 1: Enviar notificación de postulación al backend
+                    const formData = new URLSearchParams();
+                    formData.append('oferta', id);
+                    const res1 = await fetch('/site/include/php/mod/aplicar.oferta.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData
+                    });
+                    
+                    let data1 = null;
+                    try {
+                        data1 = await res1.json();
+                    } catch (e) {
+                        return { success: false, error: "Respuesta inválida del servidor USAL." };
+                    }
+
+                    if (!data1 || !data1.emailSent) {
+                        return { success: false, error: data1 ? data1.error_msg : "El portal no envió la postulación." };
+                    }
+
+                    // Paso 2: Ejecutar la confirmación que persiste la postulación en la BD del alumno
+                    const confirmUrl = `/ofertas-detalle?aplicado=OK&aplicar=1&id=${id}&c=${getRandomString(20)}`;
+                    const res2 = await fetch(confirmUrl);
+                    
+                    return {
+                        success: res2.ok,
+                        status: res2.status
+                    };
+                }
+            """, numeric_id)
+            if result.get("success"):
+                return True, "Postulación confirmada y registrada exitosamente en el portal USAL."
+            return False, f"El portal USAL no confirmó la postulación: {result.get('error', result)}"
+        except Exception as e:
+            return False, f"Error al ejecutar postulación: {e}"
+

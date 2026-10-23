@@ -10,12 +10,20 @@ from src.browser import ChromeConnector
 from src.scraper import PortalScraper
 from src.evaluator import JobEvaluator
 from src.storage import StorageRepository
-from src.ui import console, print_welcome, print_job_card, ask_user_confirmation
+from src.ui import (
+    console,
+    print_welcome,
+    print_job_card,
+    ask_user_confirmation,
+    print_pending_approved_table,
+    ask_batch_confirmation
+)
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description="Bot de búsqueda y postulación en portal USAL")
     parser.add_argument("--auto", action="store_const", const="auto", dest="mode", help="Modo 100% automático")
     parser.add_argument("--dry-run", action="store_const", const="dry-run", dest="mode", help="Auditoría sin postular")
+    parser.add_argument("--apply-approved", action="store_true", help="Postular directamente a las vacantes ya aprobadas")
     parser.add_argument("--cdp-url", default="http://localhost:9222", help="URL del puerto de depuración de Chrome")
     parser.set_defaults(mode="interactive")
     return parser.parse_args(args)
@@ -46,8 +54,49 @@ async def main_async():
     storage = StorageRepository(base_dir / "data" / "job_history.db")
     storage.init_db()
 
-    evaluator = JobEvaluator(api_key=api_key, profile=profile, criteria=criteria)
     scraper = PortalScraper()
+
+    # Si hay ofertas previamente aprobadas en el Dry Run y el usuario no está en dry-run
+    pending_approved = storage.get_pending_approved_jobs()
+    if pending_approved and (args.apply_approved or args.mode != "dry-run"):
+        console.print(f"\n[bold green]Se encontraron {len(pending_approved)} vacantes previamente aprobadas listas para postulación.[/bold green]")
+        print_pending_approved_table(pending_approved)
+
+        should_run_batch = False
+        if args.mode == "auto" or args.apply_approved:
+            should_run_batch = True
+        else:
+            should_run_batch = ask_batch_confirmation(len(pending_approved))
+
+        if should_run_batch:
+            connector = ChromeConnector(cdp_url=args.cdp_url)
+            try:
+                console.print(f"\n[cyan]Conectando a Chrome en {args.cdp_url}...[/cyan]")
+                page = await connector.connect()
+                console.print(f"[bold cyan]Iniciando postulación automática a {len(pending_approved)} ofertas...[/bold cyan]\n")
+
+                applied_count = 0
+                for idx, job in enumerate(pending_approved, 1):
+                    console.print(f"[cyan]Postulando ({idx}/{len(pending_approved)}):[/cyan] [bold]{job['title']}[/bold] (Score: {job['fit_score']})...")
+                    success, msg = await scraper.apply_to_offer_by_id(page, job["job_id"])
+                    if success:
+                        storage.mark_as_applied(job["job_id"])
+                        applied_count += 1
+                        console.print(f"  [bold green]✓ {msg}[/bold green]")
+                    else:
+                        console.print(f"  [bold red]✗ {msg}[/bold red]")
+                    await connector.human_delay(2.0, 3.5)
+
+                await page.reload()
+                console.print(f"\n[bold green]✓ ¡Lote finalizado! Se postularon {applied_count}/{len(pending_approved)} vacantes exitosamente.[/bold green]")
+            except ConnectionError as e:
+                console.print(f"[bold red]{e}[/bold red]")
+            finally:
+                await connector.close()
+                console.print("[bold cyan]Historial actualizado en SQLite.[/bold cyan]")
+            return
+
+    evaluator = JobEvaluator(api_key=api_key, profile=profile, criteria=criteria)
     connector = ChromeConnector(cdp_url=args.cdp_url)
 
     try:
@@ -62,10 +111,36 @@ async def main_async():
 
         for idx, job in enumerate(jobs, 1):
             if storage.is_job_seen(job.job_id):
-                console.print(f"[dim]Oferta ya vista: {job.title} ({job.company}). Omitiendo...[/dim]")
+                console.print(f"[dim]Oferta ya vista ({idx}/{len(jobs)}): {job.title} ({job.company}). Omitiendo...[/dim]")
                 continue
 
-            console.print(f"[cyan]Evaluando ({idx}/{len(jobs)}): {job.title} - {job.company}...[/cyan]")
+            if getattr(job, "already_applied", False):
+                console.print(f"[bold green]Ya postulaste previamente ({idx}/{len(jobs)}):[/bold green] {job.title} ({job.company}). Registrando...")
+                storage.record_job_evaluation(
+                    job_id=job.job_id,
+                    title=job.title,
+                    company=job.company,
+                    score=100,
+                    recommendation="APPLY",
+                    reason="Postulación existente detectada en el portal"
+                )
+                storage.mark_as_applied(job.job_id)
+                continue
+
+            prefilter_reason = evaluator.should_prefilter_skip(job.title)
+            if prefilter_reason:
+                console.print(f"[dim]Omitida por pre-filtro ({idx}/{len(jobs)}): {job.title} - {prefilter_reason}[/dim]")
+                storage.record_job_evaluation(
+                    job_id=job.job_id,
+                    title=job.title,
+                    company=job.company,
+                    score=15,
+                    recommendation="SKIP",
+                    reason=prefilter_reason
+                )
+                continue
+
+            console.print(f"[cyan]Evaluando con Gemini ({idx}/{len(jobs)}): {job.title} - {job.company}...[/cyan]")
             evaluation = evaluator.evaluate_job(job.title, job.company, job.full_description)
 
             storage.record_job_evaluation(
@@ -80,7 +155,7 @@ async def main_async():
             print_job_card(evaluation, idx, len(jobs))
 
             should_apply = False
-            if evaluation.recommendation == "APPLY" and evaluation.fit_score >= criteria.get("min_fit_score", 75):
+            if evaluation.recommendation == "APPLY" and evaluation.fit_score >= criteria.get("min_fit_score", 65):
                 if args.mode == "auto":
                     console.print("[bold green]Modo automático: procediendo a postularse...[/bold green]")
                     should_apply = True
@@ -104,7 +179,7 @@ async def main_async():
                 else:
                     console.print(f"[bold red]✗ {msg}[/bold red]")
 
-            await connector.human_delay(1.5, 3.0)
+            await connector.human_delay(3.5, 5.0)
 
     except ConnectionError as e:
         console.print(f"[bold red]{e}[/bold red]")
